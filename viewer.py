@@ -219,7 +219,7 @@ def main():
     Fonction exemple pour présenter le programme ci-dessus.
     """
     # CREATION D'UNE GRILLE 15x15
-    hex_grid = HexGridViewer(15, 15)
+    hex_grid = HexGridViewer(10, 10)
 
     # MODIFICATION DE LA COULEUR D'UNE CASE
     # hex_grid.add_color(X, Y, color) où :
@@ -256,7 +256,7 @@ def main():
     # AFFICHAGE DE LA GRILLE
     # alias permet de renommer les noms de la légende pour des couleurs spécifiques.
     # debug_coords permet de modifier l'affichage des coordonnées sur les cases.
-    hex_grid.show(alias={"blue": "water", "white": "void", "grey": "rock"}, debug_coords=False)
+    hex_grid.show(alias={"blue": "water", "white": "void", "grey": "rock"}, debug_coords=True)
 
 
 if __name__ == "__main__":
