@@ -1,12 +1,12 @@
 """
 Programme basique en python3.8 permettant via matplolib de visualiser une grille hexagonale.
 
-Elle propose simplement:
+Elle propose simplement :
  - l'affichage des hexagones, avec des couleurs et une opacité
  - l'ajout de formes colorées sur les hexagones
  - l'ajout de liens colorés entre les hexagones
 
-Contact: sebastien.gamblin@isen-ouest.yncrea.fr
+Contact : sebastien.gamblin@isen-ouest.yncrea.fr
 """
 
 from __future__ import annotations
@@ -69,11 +69,11 @@ class Circle(Forme):
 
 class HexGridViewer:
     """
-    Classe permettant d'afficher une grille hexagonale. Elle se crée via son constructeur avec deux arguments:
+    Classe permettant d'afficher une grille hexagonale. Elle se crée via son constructeur avec deux arguments :
     la largeur et la hauteur.
-    Deux attributs gèrent l'apparence des hexagones: colors et alpha, pour respectivement représenter la
+    Deux attributs gèrent l'apparence des hexagones : colors et alpha, pour respectivement représenter la
     couleur et la transparence des hexagones.
-    Chaque hexagone est représenté par une tuple : (x, y) spécifique dans la grille. Ces tuples sont les clés
+    Chaque hexagone est représenté par un tuple : (x, y) spécifique dans la grille. Ces tuples sont les clés
     des dictionnaires colors et alpha, que vous pouvez modifier via les méthodes add_color et add_alpha.
 
     Il est aussi possible d'ajouter des symboles Rectangle ou Circle au milieu des hexagones, ainsi que des liens
@@ -143,8 +143,8 @@ class HexGridViewer:
 
     def show(self, alias: Dict[str, str] = None, debug_coords: bool = False) -> None:
         """
-        Permet d'afficher via matplotlib la grille hexagonale. :param alias: dictionnaire qui permet de modifier le
-        label d'une couleur. Ex: {"white": "snow"} :param debug_coords: booléen pour afficher les coordonnées des
+        Permet d'afficher via matplotlib la grille hexagonale. :param alias : dictionnaire qui permet de modifier le
+        label d'une couleur. Ex: {"white": "snow"} :param debug_coords : booléen pour afficher les coordonnées des
         cases. Attention, le texte est succeptible de plus ou moins bien s'afficher en fonction de la taille de la
         fenêtre matplotlib et des dimensions de la grille.
         """
@@ -271,6 +271,6 @@ if __name__ == "__main__":
 # # Quel algorithme utiliser pour aller d'un point A à un point B ?
 
 # # Quel algorithme utiliser pour créer un réseau de routes le moins couteux possible entre x villes, pour qu'elles
-# sont toutes interconnectées ?
+# soient toutes interconnectées ?
 
 ##
