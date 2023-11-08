@@ -1,7 +1,7 @@
 import queue
-
-from abstractgraph import AbstractGraph, List
-from edge import Edge
+from typing import List
+from graph.abstractgraph import AbstractGraph
+from graph.edge import Edge
 
 
 class MatrixGraph(AbstractGraph):
