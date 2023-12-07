@@ -112,8 +112,7 @@ class HexGridViewer:
         assert self.__colors[(x, y)] in mcolors.CSS4_COLORS, \
             f"self.__colors type must be in matplotlib colors. What is {self.__colors[(x, y)]} ?"
         self.__colors[(x, y)] = color
-        if alpha != 1:
-            self.add_alpha(x, y, alpha)
+        self.add_alpha(x, y, alpha)
 
     def add_alpha(self, x: int, y: int, alpha: float) -> None:
         assert 0 <= self.__alpha[(x, y)] <= 1, f"alpha value must be between 0 and 1. What is {self.__alpha[(x, y)]} ?"
@@ -141,7 +140,7 @@ class HexGridViewer:
             res = [(x + dx, y + dy) for dx, dy in ((1, 0), (1, 1), (0, 1), (-1, 0), (0, -1), (1, -1))]
         return [(dx, dy) for dx, dy in res if 0 <= dx < self.__width and 0 <= dy < self.__height]
 
-    def show(self, alias: Dict[str, str] = None, debug_coords: bool = False) -> None:
+    def show(self, alias: Dict[str, str] = None, debug_coords: bool = False, debug_altitude: bool = False, altitudes: List[int] = []) -> None:
         """
         Permet d'afficher via matplotlib la grille hexagonale. :param alias : dictionnaire qui permet de modifier le
         label d'une couleur. Ex: {"white": "snow"} :param debug_coords : booléen pour afficher les coordonnées des
@@ -175,7 +174,14 @@ class HexGridViewer:
                 if debug_coords:
                     text = f"({row}, {col})"  # Le texte que vous voulez afficher
                     ax.annotate(text, xy=center, ha='center', va='center', fontsize=8, color='black')
-
+                
+                # ajoute l'altitude dans l'hexagone
+                if debug_altitude:
+                    i = row*self.__width + col
+                    altitude = altitudes[i]
+                    text = f"{altitude}"  # Le texte que vous voulez afficher
+                    ax.annotate(text, xy=center, ha='center', va='center', fontsize=8, color='black')
+                
                 # ajoute l'hexagone
                 ax.add_patch(hexagon)
 
