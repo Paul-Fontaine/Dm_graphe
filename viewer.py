@@ -130,16 +130,6 @@ class HexGridViewer:
     def get_alpha(self, x: int, y: int) -> float:
         return self.__alpha[(x, y)]
 
-    def get_neighbours(self, x: int, y: int) -> List[Coords]:
-        """
-        Retourne la liste des coordonnées des hexagones voisins de l'hexagone en coordonnées (x,y).
-        """
-        if y % 2 == 0:
-            res = [(x + dx, y + dy) for dx, dy in ((1, 0), (0, 1), (-1, 1), (-1, 0), (-1, -1), (0, -1))]
-        else:
-            res = [(x + dx, y + dy) for dx, dy in ((1, 0), (1, 1), (0, 1), (-1, 0), (0, -1), (1, -1))]
-        return [(dx, dy) for dx, dy in res if 0 <= dx < self.__width and 0 <= dy < self.__height]
-
     def show(self, alias: Dict[str, str] = None, debug_coords: bool = False, debug_altitude: bool = False, altitudes: List[int] = []) -> None:
         """
         Permet d'afficher via matplotlib la grille hexagonale. :param alias : dictionnaire qui permet de modifier le
