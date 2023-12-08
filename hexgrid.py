@@ -21,15 +21,14 @@ def transfert_ensemble_proportionnel(D: Interval, A: Interval, x: float) -> floa
     size_D = D[1] - D[0]
     size_A = A[1] - A[0]
     result = size_A / size_D * x + A[0]
+
+    # clamp
     if result <= A[0]:
         result = A[0]
     if result >= A[1]:
         result = A[1]
+
     return result
-
-
-ground_types = ["plain", "water", "mountain", "snow", "field"]
-ground_probas = [0.4, 0.1, 0.2, 0.1, 0.2]
 
 
 class HexGrid(GraphList):
@@ -38,15 +37,14 @@ class HexGrid(GraphList):
         self.height = height
 
         # init tiles with only plains
-        tiles = []
-        for i in range(height):
-            for j in range(width):
-                # ground = random.choices(ground_types, ground_probas)[0]
-                tile = Tile(coord=(i, j),
-                            ground="plain",
-                            altitude=self.pseudo_random_altitude(i)
-                            )
-                tiles.append(tile)
+        tiles = [Tile(coord=(i, j),
+                      ground="plain",
+                      altitude=self.pseudo_random_altitude(i)
+                      )
+                 for i in range(height)
+                 for j in range(width)
+                 ]
+
         GraphList.__init__(self, "hex graph", tiles)
 
         # init edges with a default weight = 1
@@ -58,10 +56,10 @@ class HexGrid(GraphList):
                     self.add_edge(Edge(index_i_j, index_neighbor))
 
         # add some fields
-        nb_fields = random.randint(0, math.floor((height*width)**(1/3)))  # cubic root of the nb of tiles
+        nb_fields = random.randint(1, math.floor((height*width)**(1/3))-1)  # cubic root of the nb of tiles
         for i in range(nb_fields):
-            field_coord = (random.randint(0, height//2), random.randint(0, width))
-            field_size = random.randint(2, 4)
+            field_coord = (random.randint(0, height//2 - 3), random.randint(0, width))
+            field_size = random.randint(2, 3)
             self.make_field(field_coord, field_size)
 
     def i_2_coord(self, i: int) -> Coords:
@@ -127,3 +125,6 @@ class HexGrid(GraphList):
         field_coords = self.area(center, size)
         for coord in field_coords:
             self.set_ground(coord, "field")
+
+    def get_altitude_max(self):
+        return max([tile.altitude for tile in self.vertices])
