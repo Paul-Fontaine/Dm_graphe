@@ -5,8 +5,8 @@ from typing import Tuple
 from hexgrid import HexGrid, transfert_ensemble_proportionnel
 from viewer import HexGridViewer, Circle, Rect
 
-GRID_WIDTH =  40
-GRID_HEIGHT = 30
+GRID_WIDTH =  30
+GRID_HEIGHT = 25
 
 ground_type_color = {
     "plain": "green",
