@@ -1,6 +1,7 @@
 import math
 import queue
 import random
+import time
 from typing import Tuple, List
 
 from lib_graph.edge import Edge
@@ -31,8 +32,18 @@ def transfert_ensemble_proportionnel(D: Interval, A: Interval, x: float) -> floa
     return result
 
 
+MOVING_COST = {
+    "plain": 2,
+    "water": 10,
+    "mountain": 5,
+    "snow": 8,
+    "field": 3
+}
+
+
 class HexGrid(GraphList):
     def __init__(self, width, height):
+        random.seed(time.time())
         self.width = width
         self.height = height
 
@@ -48,6 +59,7 @@ class HexGrid(GraphList):
         GraphList.__init__(self, "hex graph", tiles, directed=False)
 
         # init edges with a default weight = 1
+        # mandatory to then make a BFS for the self.area() function
         for i in range(height):
             for j in range(width):
                 for neighbor in self.get_neighbours_special_edges_(i, j):
@@ -55,23 +67,50 @@ class HexGrid(GraphList):
                     index_neighbor = self.coord_2_i(neighbor)
                     self.add_edge(Edge(index_i_j, index_neighbor))
 
-        # add some fields
+        # add some fields. random number, random coords, random size
         nb_fields = random.randint(1, math.floor((height*width)**(1/3))-1)  # cubic root of the nb of tiles
         for i in range(nb_fields):
             # fields are only in the lower part of the map
-            field_coord = (random.randint(0, max(height//2 - 3, 0)), random.randint(0, width-1))
+            field_coord = (
+                random.randint(  # x
+                    0,
+                    max(height//2 - 3, 0)
+                ),
+                random.randint(  # y
+                    0,
+                    width-1
+                )
+            )
             field_size = random.randint(2, 3)
             self.make_field(field_coord, field_size)
 
-        # add some mountains
+        # add some mountains. random number, random coords, random size
         nb_mountains = random.randint(1, math.floor((height * width) ** (1 / 3)))
         for i in range(nb_mountains):
             # mountains are only in the upper part of the map
-            mountain_coord = (random.randint(min(max(height//2 + 3, 0), height-1), height-1), random.randint(0, width-1))
+            mountain_coord = (
+                random.randint(  # x
+                    min(max(height//2 + 3, 0), height-1),  # clamp to avoid errors with low dimensions
+                    height-1
+                ),
+                random.randint(  # y
+                    0,
+                    width-1
+                )
+            )
             mountain_size = random.randint(2, 4)
             self.make_mountains(mountain_coord, mountain_size)
 
-        # todo add snow if altitude > 80
+        # todo add rivers
+
+        # update edges wheights depending on the type of ground and the altitude difference
+        for edge in self.edges:
+            tile1: Tile = self.vertices[edge.u]
+            tile2: Tile = self.vertices[edge.v]
+            edge.weight = MOVING_COST[tile1.ground] + MOVING_COST[tile2.ground]
+            alt_diff = abs(tile1.altitude - tile2.altitude)
+            if alt_diff > 10:
+                edge.weight += alt_diff // 2
 
     def i_2_coord(self, i: int) -> Coords:
         row = i // self.width
@@ -111,7 +150,7 @@ class HexGrid(GraphList):
         @param bonus: altitude max added
         """
         altitude_bonus = math.floor(transfert_ensemble_proportionnel((0, self.height), (0, bonus), row))
-        altitude = random.randint(0, random_) + altitude_bonus
+        altitude = random.randint(0, math.ceil(100/self.height)) + altitude_bonus
         return altitude
 
     def area(self, center: Coords, radius: int = 3):
@@ -145,10 +184,14 @@ class HexGrid(GraphList):
                     "layer": size-i+1}
             for coord in ring["coords"]:
                 tile = self.vertices[self.coord_2_i(coord)]
-                tile.ground = "mountain"
-                tile.altitude += ring["layer"] * random.randint(2, 10)
+                tile.altitude += ring["layer"]*8 + random.randint(-5, 10)
                 if tile.altitude > 100:
                     tile.altitude = 100
+
+                if tile.altitude > 75:
+                    tile.ground = "snow"
+                else:
+                    tile.ground = "mountain"
 
     def get_altitude_max(self):
         return max(self.vertices, key=lambda tile: tile.altitude).altitude
