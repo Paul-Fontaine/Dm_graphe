@@ -45,12 +45,12 @@ class HexGrid(GraphList):
                  for j in range(width)
                  ]
 
-        GraphList.__init__(self, "hex graph", tiles)
+        GraphList.__init__(self, "hex graph", tiles, directed=False)
 
         # init edges with a default weight = 1
         for i in range(height):
             for j in range(width):
-                for neighbor in self.get_neighbours(i, j):
+                for neighbor in self.get_neighbours_special_edges_(i, j):
                     index_i_j = self.coord_2_i((i, j))
                     index_neighbor = self.coord_2_i(neighbor)
                     self.add_edge(Edge(index_i_j, index_neighbor))
@@ -59,7 +59,7 @@ class HexGrid(GraphList):
         nb_fields = random.randint(1, math.floor((height*width)**(1/3))-1)  # cubic root of the nb of tiles
         for i in range(nb_fields):
             # fields are only in the lower part of the map
-            field_coord = (random.randint(0, height//2 - 3), random.randint(0, width))
+            field_coord = (random.randint(0, max(height//2 - 3, 0)), random.randint(0, width-1))
             field_size = random.randint(2, 3)
             self.make_field(field_coord, field_size)
 
@@ -67,7 +67,7 @@ class HexGrid(GraphList):
         nb_mountains = random.randint(1, math.floor((height * width) ** (1 / 3)))
         for i in range(nb_mountains):
             # mountains are only in the upper part of the map
-            mountain_coord = (random.randint(height//2 + 3, height-1), random.randint(0, width))
+            mountain_coord = (random.randint(min(max(height//2 + 3, 0), height-1), height-1), random.randint(0, width-1))
             mountain_size = random.randint(2, 4)
             self.make_mountains(mountain_coord, mountain_size)
 
@@ -82,20 +82,6 @@ class HexGrid(GraphList):
         row, col = coord
         return row * self.width + col
 
-    def get_Tile(self, coord: Coords) -> Tile:
-        for tile in self.vertices:
-            if tile.coord == coord:
-                return tile
-        return False
-
-    def set_ground(self, coord: Coords, ground: str):
-        tile = self.get_Tile(coord)
-        tile.ground = ground
-
-    def set_altitude(self, coord: Coords, altitude: int):
-        tile = self.get_Tile(coord)
-        tile.altitude = altitude
-
     def get_neighbours(self, x: int, y: int) -> List[Coords]:
         """
         Retourne la liste des coordonnées des hexagones voisins de l'hexagone en coordonnées (x,y).
@@ -104,6 +90,17 @@ class HexGrid(GraphList):
             res = [(x + dx, y + dy) for dx, dy in ((1, 0), (0, 1), (-1, 1), (-1, 0), (-1, -1), (0, -1))]
         else:
             res = [(x + dx, y + dy) for dx, dy in ((1, 0), (1, 1), (0, 1), (-1, 0), (0, -1), (1, -1))]
+        return [(dx, dy) for dx, dy in res if 0 <= dx < self.height and 0 <= dy < self.width]
+
+    def get_neighbours_special_edges_(self, x: int, y: int) -> List[Coords]:
+        """
+        Return the list of neighbors coords but only the 3 on top, top right and top
+        It divides by 2 the time needed to create edges
+        """
+        if y % 2 == 0:
+            res = [(x + dx, y + dy) for dx, dy in ((1, 0), (0, 1), (-1, 1))]
+        else:
+            res = [(x + dx, y + dy) for dx, dy in ((1, 0), (1, 1), (0, 1))]
         return [(dx, dy) for dx, dy in res if 0 <= dx < self.height and 0 <= dy < self.width]
 
     def pseudo_random_altitude(self, row: int, random_: int = 10, bonus: int = 40) -> int:
@@ -139,18 +136,19 @@ class HexGrid(GraphList):
     def make_field(self, center: Coords, size: int):
         field_coords = self.area(center, size)
         for coord in field_coords:
-            self.set_ground(coord, "field")
+            tile = self.vertices[self.coord_2_i(coord)]
+            tile.ground = "field"
 
     def make_mountains(self, center: Coords, size: int):
         for i in range(size):
             ring = {"coords": list(set(self.area(center, i+1)) - set(self.area(center, i))),
                     "layer": size-i+1}
             for coord in ring["coords"]:
-                tile = self.get_Tile(coord)
+                tile = self.vertices[self.coord_2_i(coord)]
                 tile.ground = "mountain"
                 tile.altitude += ring["layer"] * random.randint(2, 10)
                 if tile.altitude > 100:
                     tile.altitude = 100
 
     def get_altitude_max(self):
-        return max([tile.altitude for tile in self.vertices])
+        return max(self.vertices, key=lambda tile: tile.altitude).altitude
