@@ -5,8 +5,9 @@ from typing import Tuple
 from hexgrid import HexGrid, transfert_ensemble_proportionnel
 from viewer import HexGridViewer, Circle, Rect
 
-GRID_WIDTH =  30
-GRID_HEIGHT = 25
+SCALE = 5
+GRID_WIDTH  = 6 * SCALE
+GRID_HEIGHT = 5 * SCALE
 
 ground_type_color = {
     "plain": "green",
@@ -35,11 +36,10 @@ def model_2_viewer():
         viewer.add_color(*tile.coord, ground_type_color[tile.ground], altitude_2_alpha(tile.altitude))
 
 
-
 model_2_viewer()
 
 viewer.show(alias=ground_color_type,
             debug_coords=False,
-            debug_altitude=True,
+            debug_altitude=False,
             altitudes=[tile.altitude for tile in hex_grid.vertices]
             )
