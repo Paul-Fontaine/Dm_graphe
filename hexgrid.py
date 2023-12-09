@@ -99,7 +99,7 @@ class HexGrid(GraphList):
                 )
             )
             mountain_size = random.randint(2, 4)
-            self.make_mountains(mountain_coord, mountain_size)
+            self.make_mountain(mountain_coord, mountain_size)
 
         # todo add rivers
 
@@ -153,7 +153,7 @@ class HexGrid(GraphList):
         altitude = random.randint(0, math.ceil(100/self.height)) + altitude_bonus
         return altitude
 
-    def area(self, center: Coords, radius: int = 3):
+    def area(self, center: Coords, radius: int = 3, return_layer: bool = False):
         marquage = [0] * self.order
         file = queue.Queue()
         file.put((self.coord_2_i(center), 1))
@@ -163,7 +163,7 @@ class HexGrid(GraphList):
             u, layer = file.get()
             if layer > radius:
                 break
-            area.append(self.i_2_coord(u))
+            area.append((self.i_2_coord(u), layer) if return_layer else self.i_2_coord(u))
             for v in self.successors(u):
                 if marquage[v] == 0:
                     file.put((v, layer+1))
@@ -178,20 +178,18 @@ class HexGrid(GraphList):
             tile = self.vertices[self.coord_2_i(coord)]
             tile.ground = "field"
 
-    def make_mountains(self, center: Coords, size: int):
-        for i in range(size):
-            ring = {"coords": list(set(self.area(center, i+1)) - set(self.area(center, i))),
-                    "layer": size-i+1}
-            for coord in ring["coords"]:
-                tile = self.vertices[self.coord_2_i(coord)]
-                tile.altitude += ring["layer"]*8 + random.randint(-5, 10)
-                if tile.altitude > 100:
-                    tile.altitude = 100
+    def make_mountain(self, center: Coords, size: int):
+        mountain_coords = self.area(center, size, return_layer=True)
+        for coord, layer in mountain_coords:
+            tile = self.vertices[self.coord_2_i(coord)]
+            tile.altitude += (size-layer+1)*8 + random.randint(-5, 10)
+            if tile.altitude > 100:
+                tile.altitude = 100
 
-                if tile.altitude > 75:
-                    tile.ground = "snow"
-                else:
-                    tile.ground = "mountain"
+            if tile.altitude > 75:
+                tile.ground = "snow"
+            else:
+                tile.ground = "mountain"
 
     def get_altitude_max(self):
         return max(self.vertices, key=lambda tile: tile.altitude).altitude
