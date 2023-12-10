@@ -5,10 +5,10 @@ from viewer import HexGridViewer, Circle, Rect
 ground_type_color = {
     "plain": "green",
     "water": "blue",
-    "mountain": "grey",
+    "mountain": "dimgray",
     "snow": "white",
     "field": "yellow",
-    "volcano": "saddlebrown",
+    "volcano": "black",
     "lava": "orangered"
 }
 ground_color_type = {v: k for k, v in ground_type_color.items()}
@@ -29,20 +29,21 @@ def model_2_viewer(model: HexGrid, viewer_: HexGridViewer, alpha_min: float, sho
         viewer_.add_color(
             *tile.coord,
             color=ground_type_color[tile.ground],
-            alpha=altitude_2_alpha(model, tile.altitude, alpha_min)
+            alpha=altitude_2_alpha(model, tile.altitude, alpha_min) if tile.ground != "volcano"
+            else altitude_2_alpha(model, tile.altitude, alpha_min=0.7)
         )
         if tile.town:
             viewer_.add_symbol(*tile.coord, Circle("red"))
 
     for path in model.shortest_network():
-        links = [(path[i], path[i+1]) for i in range(len(path) - 1)]
+        links = [(path[i], path[i + 1]) for i in range(len(path) - 1)]
         for link in links:
             coord1 = model.i_2_coord(link[0])
             coord2 = model.i_2_coord(link[1])
             viewer_.add_link(coord1, coord2, "black")
 
     for path in model.minimal_network():
-        links = [(path[i], path[i+1]) for i in range(len(path) - 1)]
+        links = [(path[i], path[i + 1]) for i in range(len(path) - 1)]
         for link in links:
             coord1 = model.i_2_coord(link[0])
             coord2 = model.i_2_coord(link[1])
@@ -50,7 +51,7 @@ def model_2_viewer(model: HexGrid, viewer_: HexGridViewer, alpha_min: float, sho
 
     if show_edges:
         for edge in model.edges:
-            thick = edge.weight//5
+            thick = edge.weight // 5
             viewer_.add_link(
                 coord1=model.i_2_coord(edge.u),
                 coord2=model.i_2_coord(edge.v),
@@ -59,7 +60,13 @@ def model_2_viewer(model: HexGrid, viewer_: HexGridViewer, alpha_min: float, sho
             )
 
 
-def run(n: int = 1, scale: int = 4, alpha_min: float = 0.2, show_edges: bool = False, debug_coords: bool = False, debug_altitude: bool = False):
+def run(n: int = 1,
+        scale: int = 4,
+        alpha_min: float = 0.2,
+        show_edges: bool = False,
+        debug_coords: bool = False,
+        debug_altitude: bool = False
+        ):
     GRID_WIDTH = 6 * scale
     GRID_HEIGHT = 5 * scale
 
@@ -77,8 +84,7 @@ def run(n: int = 1, scale: int = 4, alpha_min: float = 0.2, show_edges: bool = F
 
 
 run(
-    n=5,
-    scale=5,
+    n=10,
+    scale=6,
     alpha_min=0.4,
-    debug_altitude=True,
 )
