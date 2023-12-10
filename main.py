@@ -1,6 +1,6 @@
 from hexgrid import HexGrid, transfert_ensemble_proportionnel
 from tile import Tile
-from viewer import HexGridViewer
+from viewer import HexGridViewer, Circle, Rect
 
 ground_type_color = {
     "plain": "green",
@@ -29,6 +29,23 @@ def model_2_viewer(model: HexGrid, viewer_: HexGridViewer, alpha_min: float, sho
             color=ground_type_color[tile.ground],
             alpha=altitude_2_alpha(model, tile.altitude, alpha_min)
         )
+        if tile.town:
+            viewer_.add_symbol(*tile.coord, Circle("red"))
+
+    for path in model.shortest_network():
+        links = [(path[i], path[i+1]) for i in range(len(path) - 1)]
+        for link in links:
+            coord1 = model.i_2_coord(link[0])
+            coord2 = model.i_2_coord(link[1])
+            viewer_.add_link(coord1, coord2, "black")
+
+    for path in model.minimal_network():
+        links = [(path[i], path[i+1]) for i in range(len(path) - 1)]
+        for link in links:
+            coord1 = model.i_2_coord(link[0])
+            coord2 = model.i_2_coord(link[1])
+            viewer_.add_link(coord1, coord2, "red")
+
     if show_edges:
         for edge in model.edges:
             thick = edge.weight//5
@@ -58,8 +75,8 @@ def run(n: int = 1, scale: int = 4, alpha_min: float = 0.2, show_edges: bool = F
 
 
 run(
-    n=10,
-    scale=6,
+    n=5,
+    scale=5,
     alpha_min=0.4,
     debug_altitude=True,
 )
