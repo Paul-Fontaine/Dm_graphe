@@ -35,7 +35,7 @@ def transfert_ensemble_proportionnel(D: Interval, A: Interval, x: float) -> floa
 
 MOVING_COST = {
     "plain": 2,
-    "water": 1000,
+    "water": 20,
     "mountain": 5,
     "snow": 8,
     "field": 3,
@@ -109,12 +109,12 @@ class HexGrid(GraphList):
             self.make_mountain(mountain_coord, mountain_size)
 
         # add some volcanos. random number, random coords, random size
-        nb_volcanos = d
+        nb_volcanos = random.randint(1, d//2)
         for i in range(nb_volcanos):
-            # volcanos are only in the upper part of the map
+            # volcanos can be everywhere on the map
             volcano_coord = (
                 random.randint(  # x
-                    min(max(height//2 + 3, 0), height-1),  # clamp to avoid errors with low dimensions
+                    0,
                     height-1
                 ),
                 random.randint(  # y
@@ -127,15 +127,21 @@ class HexGrid(GraphList):
 
         # add some rivers
         nb_sources = random.randint(d//3, d)
-        candidates_sources = [tile.coord for tile in self.vertices if tile.altitude > 40]
+        candidates_sources = [
+            tile.coord
+            for tile in self.vertices
+            if tile.altitude > 40
+            and tile.ground not in ["volcano", "lava"]
+        ]
         sources = random.choices(candidates_sources, k=min(nb_sources, len(candidates_sources)))
         for source in sources:
             self.make_river(source)
 
+        # add some towns
         nb_towns = random.randint(
             (d-1)//2,
             (d+2)//2
-        ) + 2
+        )
         for i in range(nb_towns):
             town_coord = (
                 random.randint(  # x
@@ -147,7 +153,7 @@ class HexGrid(GraphList):
                     width - 1
                 )
             )
-            while self.get_Tile(town_coord).ground == "water" or self.get_Tile(town_coord).ground == "field":
+            while self.get_Tile(town_coord).ground in ["water", "field", "volcano", "lava"]:
                 town_coord = (
                     random.randint(  # x
                         0,
@@ -262,14 +268,12 @@ class HexGrid(GraphList):
         volcano_coords = self.area(center, size, return_layer=True)
         for coord, layer in volcano_coords:
             tile = self.vertices[self.coord_2_i(coord)]
+            tile.ground = "volcano"
             tile.altitude += (size-layer+1)*8 + random.randint(-5, 10)
             if tile.altitude > 100:
                 tile.altitude = 100
-
-            if tile.altitude > 90:
+            if layer == 1 or random.random() < 1/16:
                 tile.ground = "lava"
-            else:
-                tile.ground = "volcano"
 
     def get_altitude_max(self):
         return max(self.vertices, key=lambda tile: tile.altitude).altitude
@@ -284,8 +288,12 @@ class HexGrid(GraphList):
         while True:
             # candidates are the successors of u that are not already in the river and with a lower altitude
             # I added a tolerance of +1 to make the rivers longer
-            candidates = [s for s in self.successors(u)
-                          if not visited[s] and self.vertices[s].altitude <= self.vertices[u].altitude + 1]
+            candidates = [
+                s for s in self.successors(u)
+                if not visited[s]
+                and self.vertices[s].altitude <= self.vertices[u].altitude + 1
+                and self.vertices[s].ground != "volcano"
+            ]
             if not candidates:
                 break
 
