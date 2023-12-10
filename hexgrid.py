@@ -67,8 +67,10 @@ class HexGrid(GraphList):
                     index_neighbor = self.coord_2_i(neighbor)
                     self.add_edge(Edge(index_i_j, index_neighbor))
 
+        d = math.floor((height * width) ** (1 / 3))  # cubic root of the nb of tiles
+
         # add some fields. random number, random coords, random size
-        nb_fields = random.randint(1, math.floor((height*width)**(1/3))-1)  # cubic root of the nb of tiles
+        nb_fields = random.randint(1, d)
         for i in range(nb_fields):
             # fields are only in the lower part of the map
             field_coord = (
@@ -85,7 +87,7 @@ class HexGrid(GraphList):
             self.make_field(field_coord, field_size)
 
         # add some mountains. random number, random coords, random size
-        nb_mountains = random.randint(1, math.floor((height * width) ** (1 / 3)))
+        nb_mountains = random.randint(1, d)
         for i in range(nb_mountains):
             # mountains are only in the upper part of the map
             mountain_coord = (
@@ -102,6 +104,11 @@ class HexGrid(GraphList):
             self.make_mountain(mountain_coord, mountain_size)
 
         # todo add rivers
+        nb_sources = random.randint(2, d)
+        candidates_sources = [tile.coord for tile in self.vertices if tile.altitude > 50]
+        sources = random.choices(candidates_sources, k=min(nb_sources, len(candidates_sources)))
+        for source in sources:
+            self.make_river(source)
 
         # update edges wheights depending on the type of ground and the altitude difference
         for edge in self.edges:
@@ -142,16 +149,20 @@ class HexGrid(GraphList):
             res = [(x + dx, y + dy) for dx, dy in ((1, 0), (1, 1), (0, 1))]
         return [(dx, dy) for dx, dy in res if 0 <= dx < self.height and 0 <= dy < self.width]
 
-    def pseudo_random_altitude(self, row: int, random_: int = 10, bonus: int = 40) -> int:
+    def pseudo_random_altitude(self, row: int, random_: int = 75, bonus: int = 40) -> int:
         """
         Generate a pseudo random altitude for __init__(). It creates a gradient from top to bottom
         @param row:
-        @param random_: control the variation on each row
+        @param random_: adjust the variation on each row
         @param bonus: altitude max added
         """
+        altitude_init = random.randint(
+            0,
+            math.ceil(random_/self.height)
+        )
+        # no randomness for altitude bonus it only depends on the row
         altitude_bonus = math.floor(transfert_ensemble_proportionnel((0, self.height), (0, bonus), row))
-        altitude = random.randint(0, math.ceil(100/self.height)) + altitude_bonus
-        return altitude
+        return altitude_init + altitude_bonus
 
     def area(self, center: Coords, radius: int = 3, return_layer: bool = False):
         marquage = [0] * self.order
@@ -193,3 +204,34 @@ class HexGrid(GraphList):
 
     def get_altitude_max(self):
         return max(self.vertices, key=lambda tile: tile.altitude).altitude
+
+    def river(self, src: Coords) -> List[Coords]:
+        river: List[Coords] = [src]
+        src = self.coord_2_i(src)
+        visited = [False] * self.order
+
+        visited[src] = True
+        u = src
+        while True:
+            candidates = [s for s in self.successors(u)
+                          if not visited[s] and self.vertices[s].altitude <= self.vertices[u].altitude]
+            if not candidates:
+                break
+
+            # I don't know how to choose the next tile
+            # If it's the lowest tile then it creates a short river as it maximizes the chances to go in a cul-de-sac
+            # with a random choice it creates wide rivers as it can zigzag, but they are longer
+            v = min(candidates, key=lambda c: self.vertices[c].altitude)
+            # v = random.choice(candidates)
+
+            visited[v] = True
+            river.append(self.i_2_coord(v))
+            u = v
+
+        return river
+
+    def make_river(self, src: Coords):
+        river_coords = self.river(src)
+        for coord in river_coords:
+            tile: Tile = self.vertices[self.coord_2_i(coord)]
+            tile.ground = "water"
