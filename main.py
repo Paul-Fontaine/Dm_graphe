@@ -12,7 +12,7 @@ ground_type_color = {
 ground_color_type = {v: k for k, v in ground_type_color.items()}
 
 
-def altitude_2_alpha(model: HexGrid, altitude: int, alpha_min: float = 0.2, ) -> float:
+def altitude_2_alpha(model: HexGrid, altitude: int, alpha_min: float) -> float:
     """
     @param model:
     @param alpha_min:
@@ -22,12 +22,12 @@ def altitude_2_alpha(model: HexGrid, altitude: int, alpha_min: float = 0.2, ) ->
     return transfert_ensemble_proportionnel((0, model.get_altitude_max()), (alpha_min, 1), altitude)
 
 
-def model_2_viewer(model: HexGrid, viewer_: HexGridViewer, show_edges: bool = False):
+def model_2_viewer(model: HexGrid, viewer_: HexGridViewer, alpha_min: float, show_edges: bool = False):
     for tile in model.vertices:
         viewer_.add_color(
             *tile.coord,
             color=ground_type_color[tile.ground],
-            alpha=altitude_2_alpha(model, tile.altitude)
+            alpha=altitude_2_alpha(model, tile.altitude, alpha_min)
         )
     if show_edges:
         for edge in model.edges:
@@ -40,7 +40,7 @@ def model_2_viewer(model: HexGrid, viewer_: HexGridViewer, show_edges: bool = Fa
             )
 
 
-def run(n: int = 1, scale: int = 4, show_edges: bool = False, debug_coords: bool = False, debug_altitude: bool = False):
+def run(n: int = 1, scale: int = 4, alpha_min: float = 0.2, show_edges: bool = False, debug_coords: bool = False, debug_altitude: bool = False):
     GRID_WIDTH = 6 * scale
     GRID_HEIGHT = 5 * scale
 
@@ -48,7 +48,7 @@ def run(n: int = 1, scale: int = 4, show_edges: bool = False, debug_coords: bool
         hex_grid = HexGrid(GRID_WIDTH, GRID_HEIGHT)
         viewer = HexGridViewer(GRID_WIDTH, GRID_HEIGHT)
 
-        model_2_viewer(hex_grid, viewer, show_edges)
+        model_2_viewer(hex_grid, viewer, alpha_min, show_edges)
 
         viewer.show(alias=ground_color_type,
                     debug_coords=debug_coords,
@@ -60,5 +60,6 @@ def run(n: int = 1, scale: int = 4, show_edges: bool = False, debug_coords: bool
 run(
     n=10,
     scale=6,
+    alpha_min=0.4,
     debug_altitude=True,
 )
