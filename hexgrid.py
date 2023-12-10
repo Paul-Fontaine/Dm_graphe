@@ -38,7 +38,9 @@ MOVING_COST = {
     "water": 1000,
     "mountain": 5,
     "snow": 8,
-    "field": 3
+    "field": 3,
+    "volcano": 6,
+    "lava": 100000
 }
 
 
@@ -105,6 +107,23 @@ class HexGrid(GraphList):
             )
             mountain_size = random.randint(2, 4)
             self.make_mountain(mountain_coord, mountain_size)
+
+        # add some volcanos. random number, random coords, random size
+        nb_volcanos = d
+        for i in range(nb_volcanos):
+            # volcanos are only in the upper part of the map
+            volcano_coord = (
+                random.randint(  # x
+                    min(max(height//2 + 3, 0), height-1),  # clamp to avoid errors with low dimensions
+                    height-1
+                ),
+                random.randint(  # y
+                    0,
+                    width-1
+                )
+            )
+            volcano_size = random.randint(2, 3)
+            self.make_volcano(volcano_coord, volcano_size)
 
         # add some rivers
         nb_sources = random.randint(d//3, d)
@@ -238,6 +257,19 @@ class HexGrid(GraphList):
                 tile.ground = "snow"
             else:
                 tile.ground = "mountain"
+
+    def make_volcano(self, center: Coords, size: int):
+        volcano_coords = self.area(center, size, return_layer=True)
+        for coord, layer in volcano_coords:
+            tile = self.vertices[self.coord_2_i(coord)]
+            tile.altitude += (size-layer+1)*8 + random.randint(-5, 10)
+            if tile.altitude > 100:
+                tile.altitude = 100
+
+            if tile.altitude > 90:
+                tile.ground = "lava"
+            else:
+                tile.ground = "volcano"
 
     def get_altitude_max(self):
         return max(self.vertices, key=lambda tile: tile.altitude).altitude

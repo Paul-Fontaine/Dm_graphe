@@ -7,7 +7,9 @@ ground_type_color = {
     "water": "blue",
     "mountain": "grey",
     "snow": "white",
-    "field": "yellow"
+    "field": "yellow",
+    "volcano": "saddlebrown",
+    "lava": "orangered"
 }
 ground_color_type = {v: k for k, v in ground_type_color.items()}
 
