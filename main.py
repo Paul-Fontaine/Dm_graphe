@@ -7,7 +7,8 @@ ground_type_color = {
     "water": "blue",
     "mountain": "grey",
     "snow": "white",
-    "field": "yellow"
+    "field": "yellow",
+    "town": "brown"
 }
 ground_color_type = {v: k for k, v in ground_type_color.items()}
 
@@ -60,5 +61,5 @@ def run(n: int = 1, scale: int = 4, show_edges: bool = False, debug_coords: bool
 run(
     n=10,
     scale=6,
-    debug_altitude=True,
+    debug_altitude=False,
 )

@@ -37,7 +37,8 @@ MOVING_COST = {
     "water": 10,
     "mountain": 5,
     "snow": 8,
-    "field": 3
+    "field": 3,
+    "town": 1
 }
 
 
@@ -85,6 +86,22 @@ class HexGrid(GraphList):
             )
             field_size = random.randint(2, 3)
             self.make_field(field_coord, field_size)
+
+        nb_towns = random.randint(2, 5)
+        for i in range(nb_towns):
+            # fields are only in the lower part of the map
+            town_coord = (
+                random.randint(  # x
+                    0,
+                    max(height // 1 - 3, 0)
+                ),
+                random.randint(  # y
+                    0,
+                    width - 1
+                )
+            )
+            town_size = random.randint(2, 4)
+            self.make_town(town_coord, town_size)
 
         # add some mountains. random number, random coords, random size
         nb_mountains = random.randint(1, d)
@@ -188,6 +205,12 @@ class HexGrid(GraphList):
         for coord in field_coords:
             tile = self.vertices[self.coord_2_i(coord)]
             tile.ground = "field"
+
+    def make_town(self, center: Coords, size: int):
+        town_coords = self.area(center, size)
+        for coord in town_coords:
+            tile = self.vertices[self.coord_2_i(coord)]
+            tile.ground = "town"
 
     def make_mountain(self, center: Coords, size: int):
         mountain_coords = self.area(center, size, return_layer=True)
