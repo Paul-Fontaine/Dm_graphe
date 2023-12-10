@@ -248,13 +248,13 @@ class HexGrid(GraphList):
     def make_field(self, center: Coords, size: int):
         field_coords = self.area(center, size)
         for coord in field_coords:
-            tile = self.vertices[self.coord_2_i(coord)]
+            tile = self.get_Tile(coord)
             tile.ground = "field"
 
     def make_mountain(self, center: Coords, size: int):
         mountain_coords = self.area(center, size, return_layer=True)
         for coord, layer in mountain_coords:
-            tile = self.vertices[self.coord_2_i(coord)]
+            tile = self.get_Tile(coord)
             tile.altitude += (size-layer+1)*8 + random.randint(-5, 10)
             if tile.altitude > 100:
                 tile.altitude = 100
@@ -267,7 +267,7 @@ class HexGrid(GraphList):
     def make_volcano(self, center: Coords, size: int):
         volcano_coords = self.area(center, size, return_layer=True)
         for coord, layer in volcano_coords:
-            tile = self.vertices[self.coord_2_i(coord)]
+            tile = self.get_Tile(coord)
             tile.ground = "volcano"
             tile.altitude += (size-layer+1)*8 + random.randint(-5, 10)
             if tile.altitude > 100:
@@ -312,7 +312,7 @@ class HexGrid(GraphList):
     def make_river(self, src: Coords):
         river_coords = self.river(src)
         for coord in river_coords:
-            tile: Tile = self.vertices[self.coord_2_i(coord)]
+            tile: Tile = self.get_Tile(coord)
             tile.ground = "water"
 
     def network(self):
