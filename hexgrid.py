@@ -2,10 +2,11 @@ import math
 import queue
 import random
 import time
-from typing import Tuple, List
+from typing import Tuple, List, Dict
 
 from lib_graph.edge import Edge
 from lib_graph.graphlist import GraphList
+from lib_graph.vertex import Vertex
 from tile import Tile
 
 Coords = Tuple[int, int]
@@ -34,11 +35,10 @@ def transfert_ensemble_proportionnel(D: Interval, A: Interval, x: float) -> floa
 
 MOVING_COST = {
     "plain": 2,
-    "water": 10,
+    "water": 1000,
     "mountain": 5,
     "snow": 8,
-    "field": 3,
-    "town": 1
+    "field": 3
 }
 
 
@@ -47,6 +47,7 @@ class HexGrid(GraphList):
         random.seed(time.time())
         self.width = width
         self.height = height
+        self.towns: List[Coords] = []
 
         # init tiles with only plains
         tiles = [Tile(coord=(i, j),
@@ -87,22 +88,6 @@ class HexGrid(GraphList):
             field_size = random.randint(2, 3)
             self.make_field(field_coord, field_size)
 
-        nb_towns = random.randint(2, 5)
-        for i in range(nb_towns):
-            # fields are only in the lower part of the map
-            town_coord = (
-                random.randint(  # x
-                    0,
-                    max(height // 1 - 3, 0)
-                ),
-                random.randint(  # y
-                    0,
-                    width - 1
-                )
-            )
-            town_size = random.randint(2, 4)
-            self.make_town(town_coord, town_size)
-
         # add some mountains. random number, random coords, random size
         # nb_mountains = random.randint(1, d)
         nb_mountains = 2*d - nb_fields
@@ -128,13 +113,44 @@ class HexGrid(GraphList):
         for source in sources:
             self.make_river(source)
 
+        nb_towns = random.randint(
+            (d-1)//2,
+            (d+2)//2
+        ) + 2
+        for i in range(nb_towns):
+            town_coord = (
+                random.randint(  # x
+                    0,
+                    height - 1
+                ),
+                random.randint(  # y
+                    0,
+                    width - 1
+                )
+            )
+            while self.get_Tile(town_coord).ground == "water" or self.get_Tile(town_coord).ground == "field":
+                town_coord = (
+                    random.randint(  # x
+                        0,
+                        height - 1
+                    ),
+                    random.randint(  # y
+                        0,
+                        width - 1
+                    )
+                )
+            self.towns.append(town_coord)
+            self.get_Tile(town_coord).town = True
+
         # update edges wheights depending on the type of ground and the altitude difference
         for edge in self.edges:
             tile1: Tile = self.vertices[edge.u]
             tile2: Tile = self.vertices[edge.v]
             edge.weight = MOVING_COST[tile1.ground] + MOVING_COST[tile2.ground]
             alt_diff = abs(tile1.altitude - tile2.altitude)
-            if alt_diff > 10:
+            if alt_diff > 5:
+                edge.weight += alt_diff // 3
+            elif alt_diff > 10:
                 edge.weight += alt_diff // 2
 
     def i_2_coord(self, i: int) -> Coords:
@@ -145,6 +161,9 @@ class HexGrid(GraphList):
     def coord_2_i(self, coord: Coords) -> int:
         row, col = coord
         return row * self.width + col
+
+    def get_Tile(self, coord: Coords) -> Tile:
+        return self.vertices[self.coord_2_i(coord)]
 
     def get_neighbours(self, x: int, y: int) -> List[Coords]:
         """
@@ -207,12 +226,6 @@ class HexGrid(GraphList):
             tile = self.vertices[self.coord_2_i(coord)]
             tile.ground = "field"
 
-    def make_town(self, center: Coords, size: int):
-        town_coords = self.area(center, size)
-        for coord in town_coords:
-            tile = self.vertices[self.coord_2_i(coord)]
-            tile.ground = "town"
-
     def make_mountain(self, center: Coords, size: int):
         mountain_coords = self.area(center, size, return_layer=True)
         for coord, layer in mountain_coords:
@@ -261,3 +274,51 @@ class HexGrid(GraphList):
         for coord in river_coords:
             tile: Tile = self.vertices[self.coord_2_i(coord)]
             tile.ground = "water"
+
+    def network(self):
+        network: List[List[int]] = []
+        for i, town in enumerate(self.towns):
+            for other_town in self.towns[i+1::]:
+                if town != other_town:
+                    network.append(self.shortest_path(self.coord_2_i(town), self.coord_2_i(other_town)))
+        return network
+
+    def shortest_network(self):
+        network: List[List[int]] = []
+        for i, town in enumerate(self.towns):
+            for other_town in self.towns[i + 1::]:
+                if town != other_town:
+                    path, path_cost = self.dijkstra(self.coord_2_i(town), self.coord_2_i(other_town))
+                    network.append(path)
+        return network
+
+    def minimal_network(self):
+        network: Dict[Tuple[Coords, Coords]: List[int]] = {}
+        towns_graph = GraphList("town graph", [Vertex(str(town_coord)) for town_coord in self.towns])
+
+        def town_coord_2_index(town_coord: Coords):
+            for j, vertex in enumerate(towns_graph.vertices):
+                if vertex.name == str(town_coord):
+                    return j
+
+        for i, town in enumerate(self.towns):
+            for other_town in self.towns[i + 1::]:
+                if town != other_town:
+                    path, path_cost = self.dijkstra(self.coord_2_i(town), self.coord_2_i(other_town))
+                    network[(town, other_town)] = path
+                    towns_graph.add_edge(Edge(
+                        u=town_coord_2_index(town),
+                        v=town_coord_2_index(other_town),
+                        weight=path_cost))
+
+        arpm = GraphList.arpm(towns_graph)
+
+        minimal_network = []
+        for edge in arpm.edges:
+            town1_coord = eval(arpm.vertices[edge.u].name)
+            town2_coord = eval(arpm.vertices[edge.v].name)
+            minimal_network.append(network[(town1_coord, town2_coord)])
+
+        return minimal_network
+
+
