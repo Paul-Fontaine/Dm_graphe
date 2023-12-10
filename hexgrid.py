@@ -87,7 +87,8 @@ class HexGrid(GraphList):
             self.make_field(field_coord, field_size)
 
         # add some mountains. random number, random coords, random size
-        nb_mountains = random.randint(1, d)
+        # nb_mountains = random.randint(1, d)
+        nb_mountains = 2*d - nb_fields
         for i in range(nb_mountains):
             # mountains are only in the upper part of the map
             mountain_coord = (
@@ -103,9 +104,9 @@ class HexGrid(GraphList):
             mountain_size = random.randint(2, 4)
             self.make_mountain(mountain_coord, mountain_size)
 
-        # todo add rivers
-        nb_sources = random.randint(2, d)
-        candidates_sources = [tile.coord for tile in self.vertices if tile.altitude > 50]
+        # add some rivers
+        nb_sources = random.randint(d//3, d)
+        candidates_sources = [tile.coord for tile in self.vertices if tile.altitude > 40]
         sources = random.choices(candidates_sources, k=min(nb_sources, len(candidates_sources)))
         for source in sources:
             self.make_river(source)
@@ -149,7 +150,7 @@ class HexGrid(GraphList):
             res = [(x + dx, y + dy) for dx, dy in ((1, 0), (1, 1), (0, 1))]
         return [(dx, dy) for dx, dy in res if 0 <= dx < self.height and 0 <= dy < self.width]
 
-    def pseudo_random_altitude(self, row: int, random_: int = 75, bonus: int = 40) -> int:
+    def pseudo_random_altitude(self, row: int, random_: int = 4, bonus: int = 40) -> int:
         """
         Generate a pseudo random altitude for __init__(). It creates a gradient from top to bottom
         @param row:
@@ -158,7 +159,7 @@ class HexGrid(GraphList):
         """
         altitude_init = random.randint(
             0,
-            math.ceil(random_/self.height)
+            random_
         )
         # no randomness for altitude bonus it only depends on the row
         altitude_bonus = math.floor(transfert_ensemble_proportionnel((0, self.height), (0, bonus), row))
@@ -213,8 +214,10 @@ class HexGrid(GraphList):
         visited[src] = True
         u = src
         while True:
+            # candidates are the successors of u that are not already in the river and with a lower altitude
+            # I added a tolerance of +1 to make the rivers longer
             candidates = [s for s in self.successors(u)
-                          if not visited[s] and self.vertices[s].altitude <= self.vertices[u].altitude]
+                          if not visited[s] and self.vertices[s].altitude <= self.vertices[u].altitude + 1]
             if not candidates:
                 break
 
