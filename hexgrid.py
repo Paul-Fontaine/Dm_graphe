@@ -45,7 +45,7 @@ MOVING_COST = {
 
 
 class HexGrid(GraphList):
-    def __init__(self, width, height):
+    def __init__(self, width, height, nb_towns: int = -1):
         random.seed(time.time())
         self.width = width
         self.height = height
@@ -138,10 +138,11 @@ class HexGrid(GraphList):
             self.make_river(source)
 
         # add some towns
-        nb_towns = random.randint(
-            (d-1)//2,
-            (d+2)//2
-        )
+        if nb_towns == -1:
+            nb_towns = random.randint(
+                (d-1)//2,
+                (d+2)//2
+            )
         for i in range(nb_towns):
             town_coord = (
                 random.randint(  # x
@@ -272,7 +273,7 @@ class HexGrid(GraphList):
             tile.altitude += (size-layer+1)*8 + random.randint(-5, 10)
             if tile.altitude > 100:
                 tile.altitude = 100
-            if layer == 1 or random.random() < 1/16:
+            if layer == 1 or random.random() < 1/20:
                 tile.ground = "lava"
 
     def get_altitude_max(self):

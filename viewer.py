@@ -121,7 +121,7 @@ class HexGridViewer:
     def add_symbol(self, x: int, y: int, symbol: Forme) -> None:
         self.__symbols[(x, y)] = symbol
 
-    def add_link(self, coord1: Coords, coord2: Coords, color: str = None, thick=2) -> None:
+    def add_link(self, coord1: Coords, coord2: Coords, color: str = None, thick=1) -> None:
         self.__links.append((coord1, coord2, color if color is not None else "black", thick))
 
     def get_color(self, x: int, y: int) -> str:
