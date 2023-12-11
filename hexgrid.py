@@ -329,8 +329,10 @@ class HexGrid(GraphList):
         for i, town in enumerate(self.towns):
             for other_town in self.towns[i + 1::]:
                 if town != other_town:
+                    start_time = time.time()
                     path, path_cost = self.dijkstra(self.coord_2_i(town), self.coord_2_i(other_town))
                     network.append(path)
+                    print("{:.2f} seconds for 1 dijkstra".format(time.time() - start_time))
         return network
 
     def minimal_network(self):
