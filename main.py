@@ -1,19 +1,6 @@
-import time
-
-from hexgrid import HexGrid, transfert_ensemble_proportionnel
-from tile import Tile
-from viewer import HexGridViewer, Circle, Rect
-
-ground_type_color = {
-    "plain": "green",
-    "water": "blue",
-    "mountain": "dimgray",
-    "snow": "white",
-    "field": "yellow",
-    "volcano": "black",
-    "lava": "orangered"
-}
-ground_color_type = {v: k for k, v in ground_type_color.items()}
+from model.hexgrid import HexGrid, transfert_ensemble_proportionnel, ground_type_color, ground_color_type
+from viewer.viewer import HexGridViewer, Circle
+from viewer.viewer_3d import Viewer3d
 
 
 def altitude_2_alpha(model: HexGrid, altitude: int, alpha_min: float) -> float:
@@ -36,7 +23,6 @@ def model_2_viewer(
         show_dijkstra_network: bool = False,
         show_arpm_network: bool = False
 ):
-    previous_time = time.time()
 
     for tile in model.vertices:
         viewer_.add_color(
@@ -59,22 +45,13 @@ def model_2_viewer(
         for path in model.network():
             add_links(path, "grey", thick=1)
 
-        print("{:.2f} seconds to make the network with BFS, no moving costs".format(time.time() - previous_time))
-        previous_time = time.time()
-
     if show_dijkstra_network:
         for path in model.shortest_network():
             add_links(path, "black", thick=1)
 
-        print("{:.2f} seconds to make the network with dijkstra".format(time.time() - previous_time))
-        previous_time = time.time()
-
     if show_arpm_network:
         for path in model.minimal_network():
             add_links(path, "red", thick=2)
-
-        print("{:.2f} seconds to make the minimal network with kruskal".format(time.time() - previous_time))
-        previous_time = time.time()
 
     if show_edges:
         for edge in model.edges:
@@ -87,8 +64,8 @@ def model_2_viewer(
             )
 
 
-def run(n: int = 1,
-        scale: int = 4,
+def run(
+        n: int = 1, scale: int = 4,
         alpha_min: float = 0.2,
         nb_of_towns: int = -1,
         debug_coords: bool = False,
@@ -97,7 +74,7 @@ def run(n: int = 1,
         show_BFS_network: bool = False,
         show_dijkstra_network: bool = False,
         show_arpm_network: bool = False
-        ):
+):
 
     GRID_WIDTH = 6 * scale
     GRID_HEIGHT = 5 * scale
@@ -123,14 +100,19 @@ def run(n: int = 1,
             altitudes=[tile.altitude for tile in hex_grid.vertices]
         )
 
-        print()
+
+def run_3d(scale: int):
+    hex_grid = HexGrid(6*scale, 5*scale, 0)
+    viewer = Viewer3d(hex_grid)
+    viewer.display()
 
 
-run(
-    n=5,
-    scale=5,
-    alpha_min=0.1,
-    nb_of_towns=10,
-    show_dijkstra_network=True,
-    show_arpm_network=True
-)
+# run(
+#     n=5,
+#     scale=7,
+#     alpha_min=0.2,
+#     nb_of_towns=3,
+#     show_BFS_network=True
+# )
+
+run_3d(scale=10)
