@@ -1,9 +1,9 @@
 import queue
-from typing import List, Tuple
+from typing import List, Tuple, Dict
 from abc import ABC, abstractmethod
 
-from lib_graph.edge import Edge
-from lib_graph.vertex import Vertex
+from model.lib_graph.edge import Edge
+from model.lib_graph.vertex import Vertex
 
 number = int | float
 
@@ -16,6 +16,7 @@ class AbstractGraph(ABC):
         self.order = len(vertices)
         self.vertices = vertices
         self.edges = []
+        self.edges_index: Dict[Tuple[int, int]: int] = {}
 
     # methods for vertices
 
@@ -56,6 +57,12 @@ class AbstractGraph(ABC):
     @abstractmethod
     def has_edge(self, v1: int, v2: int) -> bool:
         pass
+
+    def get_Edge(self, u: int, v: int) -> Edge:
+        try:
+            return self.edges[self.edges_index[(u, v)]]
+        except KeyError:
+            return self.edges[self.edges_index[(v, u)]]
 
     @abstractmethod
     def print(self) -> int:
@@ -220,10 +227,6 @@ class AbstractGraph(ABC):
 
         return kraph
 
-    @classmethod
-    def arpm(cls, g: '"AbstractGraph"') -> '"AbstractGraph"':
-        return cls.kruskal_Union_Find(g)
-
     # @classmethod
     # def prim(cls, g: '"AbstractGraph"', s0: int = 0) -> '"AbstractGraph"':
     #     prim = cls("prim", [g.vertices[s0]], g.directed)
@@ -259,6 +262,10 @@ class AbstractGraph(ABC):
     #
     #     return prim
 
+    @classmethod
+    def arpm(cls, g: '"AbstractGraph"') -> '"AbstractGraph"':
+        return cls.kruskal_Union_Find(g)
+
     @staticmethod
     def path(pred: List[int], s0: int, s1: int) -> List[int]:
         path = []
@@ -273,15 +280,10 @@ class AbstractGraph(ABC):
         path.reverse()
         return path
 
-    def getEdge(self, u: int, v: int):
-        for e in self.edges:
-            if {u, v} == {e.u, e.v}:
-                return e
-
     def relacher(self, si: int, sj: int, dist: List[number], pred: List[int]) -> None:
-        e = self.getEdge(si, sj)
-        if dist[sj] > dist[si] + e.weight:
-            dist[sj] = dist[si] + e.weight
+        w = self.get_Edge(si, sj).weight
+        if dist[sj] > dist[si] + w:
+            dist[sj] = dist[si] + w
             pred[sj] = si
 
     def dijkstra(self, s0: int = 0, s1: int = None) -> (List[int], List[number]):
@@ -306,12 +308,12 @@ class AbstractGraph(ABC):
         pred = [None] * self.order
         F = list(range(self.order))
 
-        for i in range(1, self.order-1):
+        for i in range(1, self.order - 1):
             for e in self.edges:
                 self.relacher(e.u, e.v, dist, pred)
 
         for e in self.edges:
-            if dist[e.v] > dist[e.u] + self.getEdge(e.u, e.v).weight:
+            if dist[e.v] > dist[e.u] + e.weight:
                 print("circuit absorbant")
                 break
 

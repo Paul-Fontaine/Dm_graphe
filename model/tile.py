@@ -1,6 +1,6 @@
 from typing import Tuple
 
-from lib_graph.vertex import Vertex
+from model.lib_graph.vertex import Vertex
 
 
 class Tile(Vertex):

@@ -1,6 +1,6 @@
 from typing import List, Tuple
 
-from lib_graph.abstractgraph import AbstractGraph, Vertex, Edge
+from model.lib_graph.abstractgraph import AbstractGraph, Vertex, Edge
 
 
 class GraphList(AbstractGraph):
@@ -49,6 +49,7 @@ class GraphList(AbstractGraph):
     def add_edge(self, e: Edge) -> None:
         if e in self.edges:
             return
+        self.edges_index[(e.u, e.v)] = len(self.edges)
         self.edges.append(e)
         if self.directed:
             self.successors_list[e.u].append(e.v)

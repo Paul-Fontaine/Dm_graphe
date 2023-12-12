@@ -4,10 +4,10 @@ import random
 import time
 from typing import Tuple, List, Dict
 
-from lib_graph.edge import Edge
-from lib_graph.graphlist import GraphList
-from lib_graph.vertex import Vertex
-from tile import Tile
+from model.lib_graph.edge import Edge
+from model.lib_graph.graphlist import GraphList
+from model.lib_graph.vertex import Vertex
+from model.tile import Tile
 
 Coords = Tuple[int, int]
 Interval = Tuple[float, float]
@@ -31,6 +31,18 @@ def transfert_ensemble_proportionnel(D: Interval, A: Interval, x: float) -> floa
         result = A[1]
 
     return result
+
+
+ground_type_color = {
+    "plain": "green",
+    "water": "blue",
+    "mountain": "dimgray",
+    "snow": "white",
+    "field": "yellow",
+    "volcano": "black",
+    "lava": "orangered"
+}
+ground_color_type = {v: k for k, v in ground_type_color.items()}
 
 
 MOVING_COST = {
@@ -329,10 +341,8 @@ class HexGrid(GraphList):
         for i, town in enumerate(self.towns):
             for other_town in self.towns[i + 1::]:
                 if town != other_town:
-                    start_time = time.time()
                     path, path_cost = self.dijkstra(self.coord_2_i(town), self.coord_2_i(other_town))
                     network.append(path)
-                    print("{:.2f} seconds for 1 dijkstra".format(time.time() - start_time))
         return network
 
     def minimal_network(self):
