@@ -137,7 +137,7 @@ class HexGrid(GraphList):
             self.make_volcano(volcano_coord, volcano_size)
 
         # add some rivers
-        nb_sources = random.randint(d // 3, d)
+        nb_sources = random.randint(d // 3, d // 2) + 1
         candidates_sources = [
             tile.coord
             for tile in self.vertices
@@ -316,38 +316,16 @@ class HexGrid(GraphList):
                     visited[v] = True
 
         path = self.path(pred, src, deepest_node)
-        return [self.i_2_coord(tile) for tile in path]
+        path = [self.i_2_coord(tile) for tile in path]
+        l = len(path)
+        if l > math.sqrt(self.order) / 2:
+            # add a lake
+            lake_center = random.choice(path[l//2::])
+            lake_radius = random.randint(2, 3)
+            lake_coords = self.area(lake_center, lake_radius)
+            path += lake_coords
 
-    def river(self, src: Coords) -> List[Coords]:
-        river: List[Coords] = [src]
-        src = self.coord_2_i(src)
-        visited = [False] * self.order
-
-        visited[src] = True
-        u = src
-        while True:
-            # candidates are the successors of u that are not already in the river and with a lower altitude
-            # I added a tolerance of +1 to make the rivers longer
-            candidates = [
-                s for s in self.successors(u)
-                if not visited[s]
-                   and self.vertices[s].altitude <= self.vertices[u].altitude + 1
-                   and self.vertices[s].ground != "volcano"
-            ]
-            if not candidates:
-                break
-
-            # I don't know how to choose the next tile
-            # If it's the lowest tile then it creates a short river as it maximizes the chances to go in a cul-de-sac
-            # with a random choice it creates wide rivers as it can zigzag, but they are longer
-            v = min(candidates, key=lambda c: self.vertices[c].altitude)
-            # v = random.choice(candidates)
-
-            visited[v] = True
-            river.append(self.i_2_coord(v))
-            u = v
-
-        return river
+        return path
 
     def make_river(self, src: Coords):
         river_coords = self.longest_river(src)
