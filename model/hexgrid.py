@@ -44,7 +44,6 @@ ground_type_color = {
 }
 ground_color_type = {v: k for k, v in ground_type_color.items()}
 
-
 MOVING_COST = {
     "plain": 2,
     "water": 20,
@@ -92,11 +91,11 @@ class HexGrid(GraphList):
             field_coord = (
                 random.randint(  # x
                     0,
-                    max(height//2 - 3, 0)
+                    max(height // 2 - 3, 0)
                 ),
                 random.randint(  # y
                     0,
-                    width-1
+                    width - 1
                 )
             )
             field_size = random.randint(2, 3)
@@ -104,46 +103,46 @@ class HexGrid(GraphList):
 
         # add some mountains. random number, random coords, random size
         # nb_mountains = random.randint(1, d)
-        nb_mountains = 2*d - nb_fields
+        nb_mountains = 2 * d - nb_fields
         for i in range(nb_mountains):
             # mountains are only in the upper part of the map
             mountain_coord = (
                 random.randint(  # x
-                    min(max(height//2 + 3, 0), height-1),  # clamp to avoid errors with low dimensions
-                    height-1
+                    min(max(height // 2 + 3, 0), height - 1),  # clamp to avoid errors with low dimensions
+                    height - 1
                 ),
                 random.randint(  # y
                     0,
-                    width-1
+                    width - 1
                 )
             )
             mountain_size = random.randint(2, 4)
             self.make_mountain(mountain_coord, mountain_size)
 
         # add some volcanos. random number, random coords, random size
-        nb_volcanos = random.randint(1, d//2)
+        nb_volcanos = random.randint(1, d // 3)
         for i in range(nb_volcanos):
             # volcanos can be everywhere on the map
             volcano_coord = (
                 random.randint(  # x
                     0,
-                    height-1
+                    height - 1
                 ),
                 random.randint(  # y
                     0,
-                    width-1
+                    width - 1
                 )
             )
             volcano_size = random.randint(2, 3)
             self.make_volcano(volcano_coord, volcano_size)
 
         # add some rivers
-        nb_sources = random.randint(d//3, d)
+        nb_sources = random.randint(d // 3, d)
         candidates_sources = [
             tile.coord
             for tile in self.vertices
             if tile.altitude > 40
-            and tile.ground not in ["volcano", "lava"]
+               and tile.ground not in ["volcano", "lava"]
         ]
         sources = random.choices(candidates_sources, k=min(nb_sources, len(candidates_sources)))
         for source in sources:
@@ -152,8 +151,8 @@ class HexGrid(GraphList):
         # add some towns
         if nb_towns == -1:
             nb_towns = random.randint(
-                (d-1)//2,
-                (d+2)//2
+                (d - 1) // 2,
+                (d + 2) // 2
             )
         for i in range(nb_towns):
             town_coord = (
@@ -252,7 +251,7 @@ class HexGrid(GraphList):
             area.append((self.i_2_coord(u), layer) if return_layer else self.i_2_coord(u))
             for v in self.successors(u):
                 if marquage[v] == 0:
-                    file.put((v, layer+1))
+                    file.put((v, layer + 1))
                     marquage[v] = 1
             marquage[u] = 2
 
@@ -268,7 +267,7 @@ class HexGrid(GraphList):
         mountain_coords = self.area(center, size, return_layer=True)
         for coord, layer in mountain_coords:
             tile = self.get_Tile(coord)
-            tile.altitude += (size-layer+1)*8 + random.randint(-5, 10)
+            tile.altitude += (size - layer + 1) * 8 + random.randint(-5, 10)
             if tile.altitude > 100:
                 tile.altitude = 100
 
@@ -282,10 +281,10 @@ class HexGrid(GraphList):
         for coord, layer in volcano_coords:
             tile = self.get_Tile(coord)
             tile.ground = "volcano"
-            tile.altitude += (size-layer+1)*8 + random.randint(-5, 10)
+            tile.altitude += (size - layer + 1) * 8 + random.randint(-5, 10)
             if tile.altitude > 100:
                 tile.altitude = 100
-            if layer == 1 or random.random() < 1/20:
+            if layer == 1 or random.random() < 1 / 20:
                 tile.ground = "lava"
 
     def get_altitude_max(self):
@@ -309,8 +308,10 @@ class HexGrid(GraphList):
                 deepest_node = u
 
             for v in self.successors(u):
-                if not visited[v] and self.vertices[v].altitude <= self.vertices[u].altitude:
-                    pile.put((v, depth+1))
+                if not visited[v] \
+                        and self.vertices[v].altitude <= self.vertices[u].altitude \
+                        and self.vertices[v].ground not in {"volcano", "lava"}:
+                    pile.put((v, depth + 1))
                     pred[v] = u
                     visited[v] = True
 
@@ -330,8 +331,8 @@ class HexGrid(GraphList):
             candidates = [
                 s for s in self.successors(u)
                 if not visited[s]
-                and self.vertices[s].altitude <= self.vertices[u].altitude + 1
-                and self.vertices[s].ground != "volcano"
+                   and self.vertices[s].altitude <= self.vertices[u].altitude + 1
+                   and self.vertices[s].ground != "volcano"
             ]
             if not candidates:
                 break
@@ -357,7 +358,7 @@ class HexGrid(GraphList):
     def network(self):
         network: List[List[int]] = []
         for i, town in enumerate(self.towns):
-            for other_town in self.towns[i+1::]:
+            for other_town in self.towns[i + 1::]:
                 if town != other_town:
                     network.append(self.shortest_path(self.coord_2_i(town), self.coord_2_i(other_town)))
         return network
@@ -399,5 +400,3 @@ class HexGrid(GraphList):
             minimal_network.append(network[(town1_coord, town2_coord)])
 
         return minimal_network
-
-
