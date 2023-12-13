@@ -52,25 +52,38 @@ class Viewer3d:
 
         return hexagons
 
-    def create_links(self, network, color: any = 'black'):
+    def create_links(self, network, color: any = 'black', thick: int = 2):
         lines: List[Line] = []
 
         for path in network:
-            links: Tuple[int, int] = [(path[i], path[i + 1]) for i in range(len(path) - 1)]
+            path_3d = []
+            for tile_i in path:
+                x, y = self.convert_2_hex_coords(self.hex_grid.i_2_coord(tile_i))
+                z = (self.hex_grid.vertices[tile_i].altitude + 2) * self.z_scale
+                point = (x, y, z)
+                path_3d.append(point)
 
-            for link in links:
-                coord1 = self.hex_grid.i_2_coord(link[0])
-                x1, y1 = self.convert_2_hex_coords(coord1)
-                z1 = (self.hex_grid.vertices[link[0]].altitude - 8) * self.z_scale
-
-                coord2 = self.hex_grid.i_2_coord(link[1])
-                x2, y2 = self.convert_2_hex_coords(coord2)
-                z2 = (self.hex_grid.vertices[link[1]].altitude - 8) * self.z_scale
-
-                line = Line((x1, y1, z1+1), (x2, y2, z2+1), lw=5, c=color)
-                lines.append(line)
+            line = Line(path_3d, lw=thick, c=color)
+            lines.append(line)
 
         return lines
+        #
+        #
+        #     links: Tuple[int, int] = [(path[i], path[i + 1]) for i in range(len(path) - 1)]
+        #
+        #     for link in links:
+        #         coord1 = self.hex_grid.i_2_coord(link[0])
+        #         x1, y1 = self.convert_2_hex_coords(coord1)
+        #         z1 = (self.hex_grid.vertices[link[0]].altitude - 8) * self.z_scale
+        #
+        #         coord2 = self.hex_grid.i_2_coord(link[1])
+        #         x2, y2 = self.convert_2_hex_coords(coord2)
+        #         z2 = (self.hex_grid.vertices[link[1]].altitude - 8) * self.z_scale
+        #
+        #         line = Line((x1, y1, z1+1), (x2, y2, z2+1), lw=5, c=color)
+        #         lines.append(line)
+        #
+        # return lines
 
 
     def display(self):
@@ -94,5 +107,5 @@ class Viewer3d:
 
         hexagons = [self.create_3d_hexagons()]
         dijkstra = self.create_links(self.hex_grid.shortest_network(), color='black')
-        arpm = self.create_links(self.hex_grid.minimal_network(), color='red')
+        arpm = self.create_links(self.hex_grid.minimal_network(), color='red', thick=5)
         show(hexagons, dijkstra, arpm, light1, light2)

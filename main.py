@@ -103,15 +103,15 @@ def run(
             )
 
     if mode in {"3d", "both"}:
-        viewer = Viewer3d(hex_grid)
+        viewer = Viewer3d(hex_grid, z_scale=0.2)
         viewer.display()
 
 
 run(
     n=1,
-    scale=5,
+    scale=10,
     alpha_min=0.2,
-    nb_of_towns=8,
+    nb_of_towns=0,
     mode="3d"
 )
 
