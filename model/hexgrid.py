@@ -291,6 +291,32 @@ class HexGrid(GraphList):
     def get_altitude_max(self):
         return max(self.vertices, key=lambda tile: tile.altitude).altitude
 
+    def longest_river(self, src: Coords) -> List[Coords]:
+        src = self.coord_2_i(src)
+        pred: List[Coords] = [None] * self.order
+        visited = [False] * self.order
+        pile = queue.LifoQueue()
+        deepest_node = src
+        max_depth = 0
+
+        visited[src] = True
+        pile.put((src, 0))
+        while not pile.empty():
+            u, depth = pile.get()
+
+            if depth > max_depth:
+                max_depth = depth
+                deepest_node = u
+
+            for v in self.successors(u):
+                if not visited[v] and self.vertices[v].altitude <= self.vertices[u].altitude:
+                    pile.put((v, depth+1))
+                    pred[v] = u
+                    visited[v] = True
+
+        path = self.path(pred, src, deepest_node)
+        return [self.i_2_coord(tile) for tile in path]
+
     def river(self, src: Coords) -> List[Coords]:
         river: List[Coords] = [src]
         src = self.coord_2_i(src)
@@ -323,7 +349,7 @@ class HexGrid(GraphList):
         return river
 
     def make_river(self, src: Coords):
-        river_coords = self.river(src)
+        river_coords = self.longest_river(src)
         for coord in river_coords:
             tile: Tile = self.get_Tile(coord)
             tile.ground = "water"

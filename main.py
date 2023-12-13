@@ -73,46 +73,46 @@ def run(
         show_edges: bool = False,
         show_BFS_network: bool = False,
         show_dijkstra_network: bool = False,
-        show_arpm_network: bool = False
+        show_arpm_network: bool = False,
+        mode: str = "2d"
 ):
-
     GRID_WIDTH = 6 * scale
     GRID_HEIGHT = 5 * scale
+    hex_grid = HexGrid(GRID_WIDTH, GRID_HEIGHT, 0)
 
-    for i in range(n):
-        hex_grid = HexGrid(GRID_WIDTH, GRID_HEIGHT, nb_of_towns)
-        viewer = HexGridViewer(GRID_WIDTH, GRID_HEIGHT)
+    if mode in {"2d", "both"}:
+        for i in range(n):
+            hex_grid = HexGrid(GRID_WIDTH, GRID_HEIGHT, nb_of_towns)
+            viewer = HexGridViewer(GRID_WIDTH, GRID_HEIGHT)
 
-        model_2_viewer(
-            hex_grid,
-            viewer,
-            alpha_min,
-            show_edges,
-            show_BFS_network,
-            show_dijkstra_network,
-            show_arpm_network
-        )
+            model_2_viewer(
+                hex_grid,
+                viewer,
+                alpha_min,
+                show_edges,
+                show_BFS_network,
+                show_dijkstra_network,
+                show_arpm_network
+            )
 
-        viewer.show(
-            alias=ground_color_type,
-            debug_coords=debug_coords,
-            debug_altitude=debug_altitude,
-            altitudes=[tile.altitude for tile in hex_grid.vertices]
-        )
+            viewer.show(
+                alias=ground_color_type,
+                debug_coords=debug_coords,
+                debug_altitude=debug_altitude,
+                altitudes=[tile.altitude for tile in hex_grid.vertices]
+            )
 
-
-def run_3d(scale: int):
-    hex_grid = HexGrid(6*scale, 5*scale, 0)
-    viewer = Viewer3d(hex_grid)
-    viewer.display()
+    if mode in {"3d", "both"}:
+        viewer = Viewer3d(hex_grid)
+        viewer.display()
 
 
-# run(
-#     n=5,
-#     scale=7,
-#     alpha_min=0.2,
-#     nb_of_towns=3,
-#     show_BFS_network=True
-# )
+run(
+    n=1,
+    scale=7,
+    alpha_min=0.2,
+    nb_of_towns=3,
+    debug_altitude=True,
+    mode="3d"
+)
 
-run_3d(scale=10)
