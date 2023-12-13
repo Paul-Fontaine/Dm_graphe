@@ -78,7 +78,7 @@ def run(
 ):
     GRID_WIDTH = 6 * scale
     GRID_HEIGHT = 5 * scale
-    hex_grid = HexGrid(GRID_WIDTH, GRID_HEIGHT, 0)
+    hex_grid = HexGrid(GRID_WIDTH, GRID_HEIGHT, nb_of_towns)
 
     if mode in {"2d", "both"}:
         for i in range(n):
@@ -109,10 +109,9 @@ def run(
 
 run(
     n=1,
-    scale=7,
+    scale=5,
     alpha_min=0.2,
-    nb_of_towns=3,
-    debug_altitude=True,
+    nb_of_towns=8,
     mode="3d"
 )
 

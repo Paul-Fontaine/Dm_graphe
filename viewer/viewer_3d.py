@@ -5,7 +5,7 @@ from vedo import *
 import matplotlib.colors
 from typing import List, Tuple
 
-from model.hexgrid import HexGrid, ground_type_color
+from model.hexgrid import HexGrid, ground_type_color, Coords
 
 
 class Viewer3d:
@@ -13,16 +13,19 @@ class Viewer3d:
         self.hex_grid = hex_grid
         self.z_scale = z_scale
 
-    def create_3d_hexagon(self, tile: 'Tile') -> Tuple['hexagon_3d', 'label']:
-        color = ground_type_color[tile.ground]
-        color_rgb = matplotlib.colors.to_rgb(color)
-
-        row, col = tile.coord
+    def convert_2_hex_coords(self, coord: Coords):
+        row, col = coord
         x = col * 1.5
         y = row * 1.5
         if col % 2:
             y += math.sqrt(3) / 2
+        return x, y
 
+    def create_3d_hexagon(self, tile: 'Tile') -> Tuple['hexagon_3d', 'label', 'town_shape']:
+        color = ground_type_color[tile.ground]
+        color_rgb = matplotlib.colors.to_rgb(color)
+
+        x, y = self.convert_2_hex_coords(tile.coord)
         z = (tile.altitude + 0.1) * self.z_scale
 
         hexagon = Polygon(
@@ -33,9 +36,14 @@ class Viewer3d:
         )
         hexagon.rotate(angle=30, axis=(0, 0, 1), point=(x, y, 0))
         hexagon_3d = hexagon.extrude(z)
+
         label = Text3D(txt=tile.altitude, pos=(x, y, z), s=0.12, justify="center")
 
-        return hexagon_3d, label
+        town = None
+        if tile.town:
+            town = Cone(pos=(x, y, z+5*self.z_scale), r=0.6, height=10*self.z_scale, c='purple')
+
+        return hexagon_3d, label, town
 
     def create_3d_hexagons(self) -> List:
         hexagons = []
@@ -43,6 +51,27 @@ class Viewer3d:
             hexagons.append(self.create_3d_hexagon(tile))
 
         return hexagons
+
+    def create_links(self, network, color: any = 'black'):
+        lines: List[Line] = []
+
+        for path in network:
+            links: Tuple[int, int] = [(path[i], path[i + 1]) for i in range(len(path) - 1)]
+
+            for link in links:
+                coord1 = self.hex_grid.i_2_coord(link[0])
+                x1, y1 = self.convert_2_hex_coords(coord1)
+                z1 = (self.hex_grid.vertices[link[0]].altitude - 8) * self.z_scale
+
+                coord2 = self.hex_grid.i_2_coord(link[1])
+                x2, y2 = self.convert_2_hex_coords(coord2)
+                z2 = (self.hex_grid.vertices[link[1]].altitude - 8) * self.z_scale
+
+                line = Line((x1, y1, z1+1), (x2, y2, z2+1), lw=5, c=color)
+                lines.append(line)
+
+        return lines
+
 
     def display(self):
         light_source_1 = Point(pos=(0, 0, 1000*self.z_scale), c='y')
@@ -64,4 +93,6 @@ class Viewer3d:
         )
 
         hexagons = [self.create_3d_hexagons()]
-        show(hexagons, light1, light2)
+        dijkstra = self.create_links(self.hex_grid.shortest_network(), color='black')
+        arpm = self.create_links(self.hex_grid.minimal_network(), color='red')
+        show(hexagons, dijkstra, arpm, light1, light2)
