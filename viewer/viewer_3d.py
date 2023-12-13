@@ -45,5 +45,23 @@ class Viewer3d:
         return hexagons
 
     def display(self):
+        light_source_1 = Point(pos=(0, 0, 1000*self.z_scale), c='y')
+        light_source_2 = Point(pos=(1.5*self.hex_grid.width, 0, 500 * self.z_scale), c='y')
+        light_focal_point = Point(pos=(self.hex_grid.width, self.hex_grid.height, 50*self.z_scale), c='r')
+        light1 = Light(
+            pos=light_source_1,
+            focal_point=light_focal_point,
+            angle=360,
+            c='w',
+            intensity=1
+        )
+        light2 = Light(
+            pos=light_source_2,
+            focal_point=light_focal_point,
+            angle=360,
+            c='#fafadc',
+            intensity=1
+        )
+
         hexagons = [self.create_3d_hexagons()]
-        show(hexagons)
+        show(hexagons, light1, light2)
