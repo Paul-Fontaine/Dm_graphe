@@ -323,6 +323,10 @@ class HexGrid(GraphList):
             lake_center = random.choice(path[l//2::])
             lake_radius = random.randint(2, 3)
             lake_coords = self.area(lake_center, lake_radius)
+            coord_alt_min = min(lake_coords, key=lambda c: self.get_Tile(c).altitude)
+            alt_min = self.get_Tile(coord_alt_min).altitude
+            for coord in lake_coords:
+                self.get_Tile(coord).altitude = alt_min
             path += lake_coords
 
         return path

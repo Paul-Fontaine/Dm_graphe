@@ -109,9 +109,9 @@ def run(
 
 run(
     n=1,
-    scale=10,
+    scale=8,
     alpha_min=0.2,
-    nb_of_towns=0,
+    nb_of_towns=8,
     mode="3d"
 )
 
