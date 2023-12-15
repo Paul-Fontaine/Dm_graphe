@@ -153,7 +153,7 @@ class AbstractGraph(ABC):
 
         return indexes_sorted
 
-    def shortest_path(self, start: int, end: int) -> list[int]:
+    def shortest_path(self, start: int, end: int, pred: List[int | None] = None) -> list[int]:
         pred = self.BFS(start)
         path = [end]
         current_vertex = end
@@ -301,33 +301,3 @@ class AbstractGraph(ABC):
                 return AbstractGraph.path(pred, s0, s1), dist[s1]
 
         return pred, dist
-
-    def BellmanFord(self, s0: int | str = 0):
-        dist = [float('inf')] * self.order
-        dist[s0] = 0
-        pred = [None] * self.order
-        F = list(range(self.order))
-
-        for i in range(1, self.order - 1):
-            for e in self.edges:
-                self.relacher(e.u, e.v, dist, pred)
-
-        for e in self.edges:
-            if dist[e.v] > dist[e.u] + e.weight:
-                print("circuit absorbant")
-                break
-
-        return pred, dist
-
-    def FloydWarshall(self):
-        dist = [[float('inf')] * self.order] * self.order
-        pred = [[None] * self.order] * self.order
-
-        for k in range(self.order):
-            for i in range(self.order):
-                for j in range(self.order):
-                    if dist[i][k] + dist[k][j] < dist[i][j]:
-                        dist[i][j] = dist[i][k] + dist[k][j]
-                        pred[i][j] = pred[k][j]
-
-        return dist, pred

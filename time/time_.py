@@ -45,8 +45,8 @@ def fill_excel_file(file_path: str, min_towns: int, max_towns: int, min_scale: i
 
 
 fill_excel_file(
-    file_path="dijkstra.xlsx",
-    min_towns=2, max_towns=7,
-    min_scale=2, max_scale=7,
+    file_path="dijkstra_network_times.xlsx",
+    min_towns=2, max_towns=6,
+    min_scale=2, max_scale=6,
     precision=3
 )

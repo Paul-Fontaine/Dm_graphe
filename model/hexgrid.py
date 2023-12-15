@@ -77,8 +77,8 @@ class HexGrid(GraphList):
         # mandatory to then make a BFS for the self.area() function
         for i in range(height):
             for j in range(width):
+                index_i_j = self.coord_2_i((i, j))
                 for neighbor in self.get_neighbours_special_edges_(i, j):
-                    index_i_j = self.coord_2_i((i, j))
                     index_neighbor = self.coord_2_i(neighbor)
                     self.add_edge(Edge(index_i_j, index_neighbor))
 
@@ -149,12 +149,13 @@ class HexGrid(GraphList):
             self.make_river(source)
 
         # add some towns
-        if nb_towns == -1:
+        if nb_towns == -1:  # nb of town not specified by user : choose a random number of towns
             nb_towns = random.randint(
                 (d - 1) // 2,
                 (d + 2) // 2
             )
         for i in range(nb_towns):
+            # choose a random place to put the town, but a town can't be in water, in a field or on a volcano
             town_coord = (
                 random.randint(  # x
                     0,
@@ -214,7 +215,7 @@ class HexGrid(GraphList):
 
     def get_neighbours_special_edges_(self, x: int, y: int) -> List[Coords]:
         """
-        Return the list of neighbors coords but only the 3 on top, top right and top
+        Return the list of neighbors coords but only the 3 on top, top right and bottom right
         It divides by 2 the time needed to create edges
         """
         if y % 2 == 0:
@@ -239,6 +240,13 @@ class HexGrid(GraphList):
         return altitude_init + altitude_bonus
 
     def area(self, center: Coords, radius: int = 3, return_layer: bool = False):
+        """
+        return the tiles around center, it's a hexagon shape
+        @param center:
+        @param radius:
+        @param return_layer: True -> return the distance from center
+        @return:
+        """
         marquage = [0] * self.order
         file = queue.Queue()
         file.put((self.coord_2_i(center), 1))
@@ -291,6 +299,7 @@ class HexGrid(GraphList):
         return max(self.vertices, key=lambda tile: tile.altitude).altitude
 
     def longest_river(self, src: Coords) -> List[Coords]:
+        # init step
         src = self.coord_2_i(src)
         pred: List[Coords] = [None] * self.order
         visited = [False] * self.order
@@ -300,6 +309,7 @@ class HexGrid(GraphList):
 
         visited[src] = True
         pile.put((src, 0))
+
         while not pile.empty():
             u, depth = pile.get()
 
@@ -315,16 +325,18 @@ class HexGrid(GraphList):
                     pred[v] = u
                     visited[v] = True
 
-        path = self.path(pred, src, deepest_node)
-        path = [self.i_2_coord(tile) for tile in path]
+        path: List[int] = self.path(pred, src, deepest_node)
+        path: List[Coords] = [self.i_2_coord(tile) for tile in path]
         l = len(path)
+
+        # if the river is long enough
         if l > math.sqrt(self.order) / 2:
-            # add a lake
-            lake_center = random.choice(path[l//2::])
-            lake_radius = random.randint(2, 3)
-            lake_coords = self.area(lake_center, lake_radius)
-            coord_alt_min = min(lake_coords, key=lambda c: self.get_Tile(c).altitude)
-            alt_min = self.get_Tile(coord_alt_min).altitude
+            # add a lake in the second half of its path
+            lake_center: Coords = random.choice(path[l//2::])
+            lake_radius: int = random.randint(2, 3)
+            lake_coords: List[Coords] = self.area(lake_center, lake_radius)
+            coord_alt_min: Coords = min(lake_coords, key=lambda c: self.get_Tile(c).altitude)
+            alt_min: int = self.get_Tile(coord_alt_min).altitude
             for coord in lake_coords:
                 self.get_Tile(coord).altitude = alt_min
             path += lake_coords
@@ -337,17 +349,37 @@ class HexGrid(GraphList):
             tile: Tile = self.get_Tile(coord)
             tile.ground = "water"
 
-    def network(self):
+    # end of methods for __init__
+
+    # network methods
+
+    def network(self) -> List[List[int]]:
+        """
+        use a BFS to get the network between all towns, but it doesn't care about terrain and altitude
+        @return: List[Path]
+        """
         network: List[List[int]] = []
         for i, town in enumerate(self.towns):
+            pred = self.BFS(self.coord_2_i(town))
             for other_town in self.towns[i + 1::]:
                 if town != other_town:
-                    network.append(self.shortest_path(self.coord_2_i(town), self.coord_2_i(other_town)))
+                    town_i = self.coord_2_i(town)
+                    other_town_i = self.coord_2_i(other_town)
+                    path = self.path(pred, town_i, other_town_i)
+                    network.append(path)
         return network
 
-    def shortest_network(self):
+    def shortest_network(self) -> List[List[int]]:
+        """
+        use the dijkstra algorithm to get the network between all towns and this time it cares about terrain and altitude
+        NB : we calculate dijkstra for each pair of towns instead of each town,
+        but as our dijkstra algorithm stop when it reaches the other town
+        we still gain time because we don't have to reach all vertices
+        @return: List[Path]
+        """
         network: List[List[int]] = []
         for i, town in enumerate(self.towns):
+            # self.dijkstra() could be here
             for other_town in self.towns[i + 1::]:
                 if town != other_town:
                     path, path_cost = self.dijkstra(self.coord_2_i(town), self.coord_2_i(other_town))
@@ -355,8 +387,12 @@ class HexGrid(GraphList):
         return network
 
     def minimal_network(self):
+        """
+        use the Kruskal algorithm (with union-find) to get the costless network that connects all towns
+        @return:
+        """
         network: Dict[Tuple[Coords, Coords]: List[int]] = {}
-        towns_graph = GraphList("town graph", [Vertex(str(town_coord)) for town_coord in self.towns])
+        towns_graph = GraphList("towns graph", [Vertex(str(town_coord)) for town_coord in self.towns])
 
         def town_coord_2_index(town_coord: Coords):
             for j, vertex in enumerate(towns_graph.vertices):
@@ -368,6 +404,7 @@ class HexGrid(GraphList):
                 if town != other_town:
                     path, path_cost = self.dijkstra(self.coord_2_i(town), self.coord_2_i(other_town))
                     network[(town, other_town)] = path
+
                     towns_graph.add_edge(Edge(
                         u=town_coord_2_index(town),
                         v=town_coord_2_index(other_town),
@@ -377,7 +414,7 @@ class HexGrid(GraphList):
 
         minimal_network = []
         for edge in arpm.edges:
-            town1_coord = eval(arpm.vertices[edge.u].name)
+            town1_coord = eval(arpm.vertices[edge.u].name)  # "(2, 5)" -> (2, 5) string to tuple
             town2_coord = eval(arpm.vertices[edge.v].name)
             minimal_network.append(network[(town1_coord, town2_coord)])
 

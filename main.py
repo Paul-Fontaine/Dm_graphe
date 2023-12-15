@@ -1,3 +1,5 @@
+from typing import List, Tuple
+
 from model.hexgrid import HexGrid, transfert_ensemble_proportionnel, ground_type_color, ground_color_type
 from viewer.viewer import HexGridViewer, Circle
 from viewer.viewer_3d import Viewer3d
@@ -25,17 +27,19 @@ def model_2_viewer(
 ):
 
     for tile in model.vertices:
+        # add colors to viewer
         viewer_.add_color(
             *tile.coord,
             color=ground_type_color[tile.ground],
             alpha=altitude_2_alpha(model, tile.altitude, alpha_min) if tile.ground != "volcano"
-            else altitude_2_alpha(model, tile.altitude, alpha_min=0.7)
+            else altitude_2_alpha(model, tile.altitude, alpha_min=0.7)  # volcanos are black not gray !
         )
+        # add towns to viewer
         if tile.town:
             viewer_.add_symbol(*tile.coord, Circle("purple"))
 
     def add_links(path , color: str, thick: int = 1):
-        links = [(path[i], path[i + 1]) for i in range(len(path) - 1)]
+        links: List[Tuple[int, int]] = [(path[i], path[i + 1]) for i in range(len(path) - 1)]  # [1,2,3, ...] -> [(1,2), (2,3) ...]
         for link in links:
             coord1 = model.i_2_coord(link[0])
             coord2 = model.i_2_coord(link[1])
@@ -55,7 +59,9 @@ def model_2_viewer(
 
     if show_edges:
         for edge in model.edges:
-            thick = edge.weight // 5
+            thick = edge.weight // 10
+            if thick >= 5:
+                thick = 5
             viewer_.add_link(
                 coord1=model.i_2_coord(edge.u),
                 coord2=model.i_2_coord(edge.v),
@@ -109,9 +115,10 @@ def run(
 
 run(
     n=1,
-    scale=8,
+    scale=4,
     alpha_min=0.2,
     nb_of_towns=8,
-    mode="3d"
+    show_edges=True,
+    mode="2d"
 )
 
