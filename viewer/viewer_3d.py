@@ -108,4 +108,4 @@ class Viewer3d:
         hexagons = [self.create_3d_hexagons()]
         dijkstra = self.create_links(self.hex_grid.shortest_network(), color='black')
         arpm = self.create_links(self.hex_grid.minimal_network(), color='red', thick=5)
-        show(hexagons, dijkstra, arpm, light1, light2)
+        show(hexagons, dijkstra, arpm, light1, light2, title="map")
