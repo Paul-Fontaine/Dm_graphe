@@ -42,6 +42,7 @@ ground_type_color = {
     "volcano": "black",
     "lava": "orangered"
 }
+
 ground_color_type = {v: k for k, v in ground_type_color.items()}
 
 MOVING_COST = {

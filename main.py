@@ -82,6 +82,20 @@ def run(
         show_arpm_network: bool = False,
         mode: str = "2d"
 ):
+    """
+    This function generate a model and display it, it repeats n times.
+    @param n: number of map generated
+    @param scale: set the size of the map, the dimensions of the map are 6*scale, 5*scale so the hexagonal map will look as a square
+    @param alpha_min: set the minimum value for transaprency in the 2d model
+    @param nb_of_towns: if it's not specified it will be random
+    @param debug_coords: if True it will print the coordinates inside the tiles in the 2d model
+    @param debug_altitude: if True it will print the altitudes in the 2d model
+    @param show_edges: if True it will show the weight of edges
+    @param show_BFS_network: if True it will calculate and display the network without the terrain and altitude constraints
+    @param show_dijkstra_network: if True it will calculate and display the netwotk with the terrain and altitude constraints
+    @param show_arpm_network: if True it will calculate and display the minimal network that connects all towns
+    @param mode: can be "2d", "3d" or "both"
+    """
     GRID_WIDTH = 6 * scale
     GRID_HEIGHT = 5 * scale
     hex_grid = HexGrid(GRID_WIDTH, GRID_HEIGHT, nb_of_towns)
@@ -109,16 +123,39 @@ def run(
             )
 
     if mode in {"3d", "both"}:
-        viewer = Viewer3d(hex_grid, z_scale=0.2)
+        viewer = Viewer3d(hex_grid, z_scale=0.15)
         viewer.display()
 
+# the next 3 calls to run will show you the project steps
+# you can simply run the main and then close the viewer window to go to the next step
 
+# generate 3 basic maps, the number of city is random
 run(
-    n=1,
-    scale=4,
+    n=3,
+    scale=6,
     alpha_min=0.2,
-    nb_of_towns=8,
-    show_edges=True,
+    debug_altitude=True,
     mode="2d"
 )
 
+# generate 3 maps to see the networks
+run(
+    n=3,
+    scale=6,
+    alpha_min=0.4,
+    nb_of_towns=8,
+    show_BFS_network=True,
+    show_dijkstra_network=True,
+    show_arpm_network=True,
+    mode="2d"
+)
+
+# generate a 3d map
+run(
+    n=1,
+    scale=6,
+    alpha_min=0.2,
+    show_dijkstra_network=True,
+    show_arpm_network=True,
+    mode="both"
+)
